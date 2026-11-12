@@ -48,6 +48,29 @@ const SpaceSchema = new mongoose.Schema({
 });
 const Space = mongoose.models.Space || mongoose.model('Space', SpaceSchema);
 
+const UserSchema = new mongoose.Schema({
+  googleId: String,
+  email: { type: String, required: true },
+  name: { type: String, required: true },
+  picture: String,
+  role: { type: String, enum: ['student', 'staff', 'admin'], default: 'student' },
+  createdAt: { type: Date, default: Date.now },
+  lastLoginAt: { type: Date, default: Date.now },
+});
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
+let memoryUsers = [];
+
+function decodeJwt(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = Buffer.from(parts[1], 'base64').toString('utf8');
+    return JSON.parse(payload);
+  } catch {
+    return null;
+  }
+}
+
 const starterSpaces = [
   {
     name: 'Central Library · Silent Reading',
@@ -202,6 +225,76 @@ app.post('/api/staff/verify', (req, res) => {
   if (!staffPin) return res.status(503).json({ error: 'Set STAFF_PIN on the server to enable staff controls.' });
   if (req.body?.pin !== staffPin) return res.status(401).json({ error: 'Incorrect staff PIN.' });
   res.json({ ok: true });
+});
+
+app.get('/api/auth/config', (_req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  });
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { credential, profile } = req.body;
+    let userData = null;
+
+    if (credential) {
+      const decoded = decodeJwt(credential);
+      if (decoded && decoded.email) {
+        userData = {
+          googleId: decoded.sub,
+          email: decoded.email,
+          name: decoded.name || decoded.email.split('@')[0],
+          picture: decoded.picture || '',
+          role: decoded.email.includes('staff') || decoded.email.includes('admin') ? 'staff' : 'student',
+        };
+      }
+    } else if (profile && profile.email) {
+      userData = {
+        googleId: profile.googleId || `demo-${Date.now()}`,
+        email: profile.email,
+        name: profile.name || profile.email.split('@')[0],
+        picture: profile.picture || '',
+        role: profile.role || 'student',
+      };
+    }
+
+    if (!userData) {
+      return res.status(400).json({ error: 'Valid Google credential or profile required.' });
+    }
+
+    if (useMongo) {
+      let user = await User.findOne({ email: userData.email });
+      if (!user) {
+        user = await User.create(userData);
+      } else {
+        user.name = userData.name;
+        if (userData.picture) user.picture = userData.picture;
+        user.lastLoginAt = new Date();
+        await user.save();
+      }
+      res.json({
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+        role: user.role,
+      });
+    } else {
+      let user = memoryUsers.find((u) => u.email === userData.email);
+      if (!user) {
+        user = { ...userData, id: String(Date.now()) };
+        memoryUsers.push(user);
+      } else {
+        user.name = userData.name;
+        if (userData.picture) user.picture = userData.picture;
+        user.lastLoginAt = new Date();
+      }
+      res.json(user);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/spaces', async (req, res) => {
