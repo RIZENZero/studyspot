@@ -873,6 +873,51 @@ function App() {
               </div>
             </div>
 
+            {/* AI Smart Match Prompts (Google AI / Gemini style) */}
+            <div className="ai-smart-prompts-row">
+              <span className="ai-badge">
+                <Sparkles size={12} />
+                <span>AI Match:</span>
+              </span>
+              <button
+                className="ai-prompt-chip"
+                onClick={() => {
+                  setMode('Quiet');
+                  setSelectedAmenities(['Power outlets', 'Natural light']);
+                  setQuery('');
+                  const match = spaces.find((s) => s.zone === 'Quiet' && s.status === 'Available');
+                  if (match) setSelected(match);
+                  setNotice('✨ AI found the best quiet space with power & natural light!');
+                }}
+              >
+                🤫 "Silent focus + power outlet"
+              </button>
+              <button
+                className="ai-prompt-chip"
+                onClick={() => {
+                  setMode('Collaborative');
+                  setSelectedAmenities(['Whiteboard']);
+                  setQuery('');
+                  const match = spaces.find((s) => s.zone === 'Collaborative');
+                  if (match) setSelected(match);
+                  setNotice('✨ AI matched group tables with whiteboards for team study!');
+                }}
+              >
+                👥 "Group work + whiteboard"
+              </button>
+              <button
+                className="ai-prompt-chip"
+                onClick={() => {
+                  setMode('All spaces');
+                  setSelectedAmenities([]);
+                  setSort('Most available');
+                  setNotice('✨ Ranked campus spaces by most open seats right now');
+                }}
+              >
+                ⚡ "Most open seats right now"
+              </button>
+            </div>
+
             {/* Amenity Filter Chips */}
             {allAmenities.length > 0 && (
               <div className="amenity-chips-row">
