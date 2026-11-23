@@ -7,10 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
 const app = express();
-app.use(cors({ origin: process.env.APP_ORIGIN || 'http://localhost:5173' }));
+app.use(cors());
 app.use(express.json());
 const PORT = process.env.PORT || 4000;
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
 let useMongo = Boolean(process.env.MONGODB_URI);
 const staffPin = process.env.STAFF_PIN;
 
