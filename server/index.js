@@ -12,7 +12,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 4000;
 const HOST = process.env.HOST || '0.0.0.0';
 let useMongo = Boolean(process.env.MONGODB_URI);
-const staffPin = process.env.STAFF_PIN;
+const staffPin = process.env.STAFF_PIN || '2008';
 
 function requireStaff(req, res, next) {
   if (!staffPin) return res.status(503).json({ error: 'Staff changes are disabled. Set STAFF_PIN on the server.' });

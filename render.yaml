@@ -10,5 +10,7 @@ services:
         value: 20
       - key: HOST
         value: 0.0.0.0
+      - key: STAFF_PIN
+        value: 2008
       - key: MONGODB_URI
         value: mongodb+srv://studyspot_app:private008@studyspot.9lbrzzo.mongodb.net/studyspot?retryWrites=true&w=majority
